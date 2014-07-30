@@ -25,16 +25,19 @@ public class MTRegExp {
 		return self.regexp.matchesInString(input, options: nil, range: NSMakeRange(0, countElements(input)))
 	}
 	
-	public func match(input: String) -> [[String]] {
+	public func match(input: String) -> MTRegExpMatchResult {
 		let match = self.nativeMatch(input)
 		if (!match) {
-			return []
+			return MTRegExpMatchResult()
 		}
 		
-		var res: [[String]] = []
+		var res: MTRegExpMatchResult = MTRegExpMatchResult()
+		
 		let checkResults = match as [NSTextCheckingResult]
 		for checkResult in checkResults {
-			var resPart: [String] = []
+			var textPart: [String] = []
+			var rangePart: [Range<String.Index>] = []
+
 			let max = checkResult.numberOfRanges
 			
 			for i in 0..<max {
@@ -43,10 +46,12 @@ public class MTRegExp {
 					start: advance(input.startIndex, nsRange.location),
 					end: advance(input.startIndex, nsRange.location+nsRange.length)
 				)
-				resPart.append(input[range])
+				rangePart.append(range)
+				textPart.append(input[range])
 			}
 			
-			res.append(resPart)
+			res.ranges.append(rangePart)
+			res.texts.append(textPart)
 		}
 		
 		return res
@@ -67,13 +72,17 @@ extension String {
 		return regexp.test(self)
 	}
 
-	public func match (pattern: String) -> [[String]] {
+	public func match (pattern: String) -> MTRegExpMatchResult {
 		var regexp = MTRegExp(pattern)
 		return regexp.match(self)
 	}
 
-	public func match (regexp: MTRegExp) -> [[String]] {
+	public func match (regexp: MTRegExp) -> MTRegExpMatchResult {
 		return regexp.match(self)
 	}
-	
+}
+
+public struct MTRegExpMatchResult {
+	var ranges: [[Range<String.Index>]] = []
+	var texts: [[String]] = []
 }
